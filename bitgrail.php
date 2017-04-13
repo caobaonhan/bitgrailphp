@@ -26,7 +26,7 @@
 	include_once('PATH/bitgrail.php');
 
 	// Initialize RaiBlocks connection/object
-	$bitgrail = new BitGrailAPI( $publicKey, $privateKey, $version );
+	$bitgrail = new BitGrailAPI( $publicKey, $privateKey, $version ); // Get public and private keys from your BitGrail account, version is the API version you want to call, default is 1
 
 	// Make calls to node as methods for your object. Responses are returned as an array.
 	// Example:
@@ -34,12 +34,12 @@
 	$args = array(
 	
 		"market" => "BTC-XRB",
-		"amount" => 10.0,
-		"price" => 0.00001000
+		"amount" => 1000,
+		"price" => "0.00000900" // I suggest to pass tiny floats as string to avoid PHP formatting 9.0E-6
 	
 	);
 
-	$response = $bitgrail->buy_order( $args );
+	$response = $bitgrail->buyorder( $args );
 	echo $response['orderId'];
 
 	// The full response (not usually needed) is stored in $this->response while the raw JSON is stored in $this->raw_response
@@ -57,9 +57,7 @@
 	class BitGrailAPI{
 		
 		// Configuration options
-		private $proto;
-		private $host;
-		private $port;
+		private $version;
 		private $publicKey;
 		private $privateKey;
 
@@ -68,20 +66,19 @@
 		public $error;
 		public $raw_response;
 		public $response;
+		public $method;
 
 		private $id = 0;
 
 		function __construct( $publicKey = "", $privateKey = "", $version = "1" ){
 			
-			$this->host          = 'https://bitgrail.com/api/v'.$version.'/';
-			$this->port          = 443;
-			$this->proto         = 'https';
+			$this->version       = $version;
 			$this->publicKey     = $publicKey;
 			$this->privateKey    = $privateKey;
 			
 		}
 
-		function __call($method, $params){
+		function __call( $method, $params ){
 			
 			$this->status       = null;
 			$this->error        = null;
@@ -98,9 +95,9 @@
 			// Build the request, it's ok that params might have any empty array
 			$request = array();
 			
-			if( isset($params[0]) ){
+			if( isset( $params[0] ) ){
 			
-				foreach($params[0] as $key=>$value){
+				foreach( $params[0] as $key=>$value ){
 						
 					$request[$key] = $value;
 						
@@ -108,12 +105,12 @@
 			
 			}
 			
-			$nonce = microtime(true)*1000000;
-			$request["nonce"] = number_format($nonce,0,'','');
+			$nonce = microtime( true )*1000000;
+			$request["nonce"] = number_format( $nonce, 0, '', '' );
 			
 			$request = http_build_query( $request, '', '&' );
-			
-			$signature = hash_hmac("sha512",$request,$this->privateKey);
+						
+			$signature = hash_hmac( "sha512", $request, $this->privateKey );
 
 			$headers = array(
 			
@@ -123,8 +120,9 @@
 			);
 
 			// Build the cURL session
-			$curl    = curl_init("{$this->proto}://{$this->host}:{$this->port}/{$this->method}");
+			$curl = curl_init( "https://bitgrail.com/api/v{$this->version}/{$this->method}" );
 			$options = array(
+			
 				CURLOPT_RETURNTRANSFER => TRUE,
 				CURLOPT_FOLLOWLOCATION => TRUE,
 				CURLOPT_USERAGENT	   => "PHP",
@@ -132,37 +130,43 @@
 				CURLOPT_HTTPHEADER     => $headers,
 				CURLOPT_POST           => TRUE,
 				CURLOPT_POSTFIELDS     => $request,
-				CURLOPT_SSL_VERIFYPEER => TRUE,
-				CURLOPT_SSL_VERIFYHOST => TRUE
+				CURLOPT_SSL_VERIFYPEER => FALSE
+				
 			);
 
 			// This prevents users from getting the following warning when open_basedir is set:
 			// Warning: curl_setopt() [function.curl-setopt]: CURLOPT_FOLLOWLOCATION cannot be activated when in safe_mode or an open_basedir is set
-			if( ini_get( 'open_basedir' ) ) {
-				unset($options[CURLOPT_FOLLOWLOCATION]);
+			if( ini_get( 'open_basedir' ) ){
+				
+				unset( $options[CURLOPT_FOLLOWLOCATION] );
+				
 			}
 
 			curl_setopt_array( $curl, $options );
 
 			// Execute the request and decode to an array
-			$this->raw_response = curl_exec($curl);
-			$this->response     = json_decode($this->raw_response, TRUE);
+			$this->raw_response = curl_exec( $curl );
+			$this->response     = json_decode( $this->raw_response, TRUE );
 
 			// If the status is not 200, something is wrong
-			$this->status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+			$this->status = curl_getinfo( $curl, CURLINFO_HTTP_CODE );
 			
 			// If there was no error, this will be an empty string
-			$curl_error = curl_error($curl);
+			$curl_error = curl_error( $curl );
 
-			curl_close($curl);
+			curl_close( $curl );
 
 			if( !empty( $curl_error ) ){
+				
 				$this->error = $curl_error;
+				
 			}
 
 			if( $this->status != 200 ){
+				
 				// If node didn't return a nice error message, we need to make our own
-				switch ($this->status) {
+				switch( $this->status ){
+					
 					case 400:
 						$this->error = 'HTTP_BAD_REQUEST';
 						break;
@@ -175,11 +179,15 @@
 					case 404:
 						$this->error = 'HTTP_NOT_FOUND';
 						break;
+						
 				}
+				
 			}
 
 			if( $this->error ){
+				
 				return FALSE;
+				
 			}
 
 			return $this->response;
