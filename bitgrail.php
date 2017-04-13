@@ -8,8 +8,15 @@
 	
 	Get full API documentations here: https://bitgrail.com/api-documentation
 	
-	====================
+	===================
 
+	INSPIRED BY Andrew LeCody EasyBitcoin-PHP
+
+	A simple class for making calls to Bitcoin's API using PHP.
+	https://github.com/aceat64/EasyBitcoin-PHP
+
+	====================
+	
 	LICENSE: Use it as you want!
 
 	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -25,10 +32,10 @@
 	// Include the script in your configuration file
 	include_once('PATH/bitgrail.php');
 
-	// Initialize RaiBlocks connection/object
+	// Initialize server connection/object
 	$bitgrail = new BitGrailAPI( $publicKey, $privateKey, $version ); // Get public and private keys from your BitGrail account, version is the API version you want to call, default is 1
 
-	// Make calls to node as methods for your object. Responses are returned as an array.
+	// Make calls to server as methods for your object. Responses are returned as an array.
 	// Example:
 
 	$args = array(
