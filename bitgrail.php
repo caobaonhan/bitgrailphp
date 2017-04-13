@@ -4,7 +4,7 @@
 
 	bitgrailphp
 
-	PHP library to make easier to interface to BitGrail exchange APIs
+	PHP library to make easier to interface to BitGrail private APIs
 	
 	Get full API documentations here: https://bitgrail.com/api-documentation
 	
@@ -42,7 +42,7 @@
 	
 		"market" => "BTC-XRB",
 		"amount" => 1000,
-		"price" => "0.00000900" // I suggest to pass tiny floats as string to avoid PHP formatting 9.0E-6
+		"price" => "0.00000900" // I suggest to pass tiny floats as string to avoid PHP formatting like 9.0E-6
 	
 	);
 

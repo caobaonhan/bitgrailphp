@@ -1,2 +1,2 @@
 # bitgrailphp
-PHP library to use BitGrail public/private API
+PHP library to use BitGrail private APIs
